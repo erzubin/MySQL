@@ -1,0 +1,197 @@
+Q-1 Which actors have the first name ‘Scarlett’?
+Ans -
+SELECT first_name, last_name
+
+FROM actor
+
+WHERE first_name = "Scarlett";
+
+Q-2 Which actors have the last name ‘Johansson’?
+Ans -
+SELECT first_name, last_name
+
+FROM actor
+
+WHERE last_name = "Johansson";
+
+Q-3How many distinct actors last names are there?
+Ans -
+SELECT COUNT(DISTINCT last_name)
+
+FROM actor
+
+WHERE last_name IS NOT NULL;
+
+Q-4Which last names are not repeated?
+Ans -
+SELECT last_name, COUNT(last_name) AS number_of_times_repeated
+FROM actor
+GROUP BY last_name
+HAVING number_of_times_repeated = 1;
+	
+
+Q-5Which last names appear more than once?
+Ans -
+SELECT last_name, COUNT(last_name) AS number_of_times_repeated
+FROM actor
+GROUP BY last_name
+HAVING number_of_times_repeated > 1;
+
+Q-6Which actor has appeared in the most films?
+Ans -
+FROM film_actor f INNER JOIN actor a ON f.actor_id = a.actor_id
+GROUP BY f.actor_id
+ORDER BY COUNT(f.actor_id) DESC
+LIMIT 1;
+
+Q-7Is ‘Academy Dinosaur’ available for rent from Store 1?
+Ans -
+SELECT *
+FROM film f INNER JOIN inventory i ON i.film_id = f.film_id
+WHERE i.store_id = 1 AND f.title = "Academy Dinosaur";
+	
+Q-8Insert a record to represent Mary Smith renting ‘Academy Dinosaur’ from Mike Hillyer at Store 1 today.
+Ans -
+INSERT INTO rental (inventory_id, customer_id,staff_id, return_date)
+SELECT inventory_id, customer_id,staff_id,DATE_ADD(CURDATE(), INTERVAL 10 DAY)
+FROM (
+SELECT i.inventory_id, 1 as commonId 
+FROM inventory i INNER JOIN film f ON i.film_id = f.film_id
+WHERE f.title = "Academy Dinosaur" and i.store_id = 1
+LIMIT 1
+) AS tempA
+INNER JOIN
+(
+SELECT customer_id, 1 as commonId 
+FROM customer 
+WHERE first_name = "Mary" AND last_name ="Smith"
+) AS tempB
+
+ON tempA.commonId = tempB.commonId
+
+INNER JOIN
+(
+SELECT staff_id, 1 as commonId
+FROM staff
+WHERE first_name ="Mike" AND last_name = "Hillyer"
+)AS tempC
+
+ON tempB.commonId = tempC.commonId;
+
+
+Q-9When is ‘Academy Dinosaur’ due?
+Ans -
+SELECT return_date
+FROM rental r 
+INNER JOIN inventory i ON i.inventory_id = r.inventory_id 
+INNER JOIN  film f ON f.film_id = i.film_id 
+WHERE f.title = "Academy Dinosaur"
+ORDER BY return_date DESC;
+
+
+Q-10 What is that average running time of all the films in the sakila DB?
+Ans -
+SELECT AVG(length)
+FROM film;
+
+What is the average running time of films by category?
+Ans-
+SELECT c.name,AVG(f.length)
+FROM film_category fc 
+INNER JOIN category c ON c.category_id = fc.category_id
+INNER JOIN  film f ON f.film_id = fc.film_id
+GROUP BY c.category_id DESC;
+
+#######################################################################################################################
+
+################################### One more Assignment on sakila Database ############################################
+
+#######################################################################################################################
+
+1. What are the names of all the languages in the database (sorted alphabetically)?
+Ans -
+SELECT name
+FROM language
+ORDER BY name ASC;
+
+2. Return the full names (first and last) of actors with “SON” in their last name, ordered by their first
+name.
+Ans-
+SELECT CONCAT(first_name, " " ,last_name) AS full_name
+FROM actor
+WHERE last_name LIKE '%SON%'
+ORDER BY first_name ASC; ;                                                                                                                                                                 
+
+3. Find all the addresses where the second address is not empty (i.e., contains some text), and return
+these second addresses sorted.
+Ans -
+SELECT *
+FROM address
+WHERE address2 = ("")
+ORDER BY address2 ASC;
+
+4. Return the first and last names of actors who played in a film involving a “Crocodile” and a “Shark”,
+along with the release year of the movie, sorted by the actors’ last names.
+Ans -
+SELECT first_name, last_name, release_year, title 
+FROM film f 
+INNER JOIN film_actor fc USING (film_id)
+INNER JOIN actor a USING (actor_id)
+WHERE description LIKE "%Crocodile%" AND description LIKE "%Shark%"
+ORDER BY last_name;
+
+5. How many films involve a “Crocodile” and a “Shark”?
+Ans -
+SELECT COUNT(*)
+FROM film f 
+WHERE description LIKE "%Crocodile%" AND description LIKE "%Shark%"
+ORDER BY last_name;
+
+6. Find all the film categories in which there are between 55 and 65 films. Return the names of these
+categories and the number of films per category, sorted by the number of films.
+Ans -
+SELECT name, COUNT(film_id) as Number_of_films
+FROM film_category INNER JOIN category USING (category_id)
+GROUP BY category_id 
+HAVING Number_of_films > 55 AND Number_of_films < 65
+ORDER BY Number_of_films;
+
+7. In how many film categories is the average difference between the film replacement cost and the
+rental rate larger than 17?
+Ans-
+SELECT name AS category_name , AVG(rental_rate) AS Avg_rental_price, AVG(replacement_cost) AS Avg_replacement_price, (AVG(replacement_cost) - AVG(rental_rate)) AS replace_sub_rental
+FROM film_category 
+INNER JOIN film USING (film_id)
+INNER JOIN category USING (category_id)
+GROUP BY category_id 
+HAVING replace_sub_rental > 17 ;
+
+
+8. Find the names (first and last) of all the actors and costumers whose first name is the same as the
+first name of the actor with ID 8. Do not return the actor with ID 8 him. Note that you cannot
+use the name of the actor with ID 8 as a constant (only the ID). There is more than one way to solve
+this question, but you need to provide only one solution.
+Ans -
+SELECT  Caption, first_name, last_name
+FROM
+        (
+            SELECT  'customer' Caption, first_name, last_name
+            FROM    customer
+            UNION  
+            SELECT  'actor' Caption, first_name, last_name
+            FROM    actor
+            WHERE actor_id != 8
+        ) subquery
+WHERE first_name IN (SELECT first_name
+					 FROM actor 
+                     WHERE actor_id = 8) 
+ORDER BY first_name, FIELD(Caption, 'customer', 'actor');
+
+
+
+
+
+
+
+
+
